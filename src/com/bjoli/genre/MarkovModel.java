@@ -11,7 +11,7 @@ public class MarkovModel
 {
 	private Matrix mat;
 	private HashMap<String, Integer> words;
-	private HashMap<String, Float> firstCounts;
+	private HashMap<String, Float> counts;
 	private int numWords;
 	private float smallest;
 
@@ -19,7 +19,7 @@ public class MarkovModel
 	{
 		mat = new Matrix();
 		words = new HashMap<String, Integer>();
-		firstCounts = new HashMap<String, Float>();
+		counts = new HashMap<String, Float>();
 	}
 
 	public void update(File file)
@@ -29,24 +29,24 @@ public class MarkovModel
 
 		while (s.hasNextLine()) //For each line in the file...
 		{
-			line = s.nextLine().toLowerCase().split("[//s]+"); //Split into words.
+			line = s.nextLine().toLowerCase().trim().split("\\s+"); //Split into words.
 			
-			if (!firstCounts.containsKey(line[0]))
+			if (line.length > 0)
 			{
-				firstCounts.put(line[0], new Float(1)); //Set the number of occurrences to 1.
-			}
-			else
-			{
-				firstCounts.put(line[0], firstCounts.get(line[0]) + 1); //Increment count.
-			}
-			
-			for (int i = 0; i < line.length; ++i)
-			{
-				if (!words.containsKey(i)) //If the word has not been added yet...
+				for (int i = 0; i < line.length; ++i)
 				{
-					words.put(line[i], numWords++); //Add the word.
+					if (!words.containsKey(line[i])) //If the word has not been added yet...
+					{
+						words.put(line[i], numWords++); //Add the word.
+						counts.put(line[i], new Float(1)); //Set the number of occurrences to 1.
+						//System.out.println("Word: " + line[i]);
+					}
+					else
+					{
+						counts.put(line[i], counts.get(line[i]) + 1); //Increment count.
+					}
 				}
-			} 
+			}
 		}
 	}
 
@@ -58,12 +58,15 @@ public class MarkovModel
 
 		while (s.hasNextLine()) //For each line in the file...
 		{
-			line = s.nextLine().toLowerCase().split("[//s]+"); //Split into words.
-
-			for (int i = 0; i < line.length - 1; ++i) //For each word in the line, except the first word...
+			line = s.nextLine().toLowerCase().split("\\s+"); //Split into words.
+			
+			if (line.length > 0)
 			{
-				current = mat.get(words.get(line[i]), words.get(line[i + 1])); //Get the current count.
-				mat.set(words.get(line[i]), words.get(line[i + 1]), current + 1); //Increment the current count.
+				for (int i = 0; i < line.length - 1; ++i) //For each word in the line, except the last word...
+				{
+					current = mat.get(words.get(line[i]), words.get(line[i + 1])); //Get the current count.
+					mat.set(words.get(line[i]), words.get(line[i + 1]), current + 1); //Increment the current count.
+				}
 			}
 		}
 	}
@@ -91,34 +94,39 @@ public class MarkovModel
 	
 	public double probability(String line)
 	{
-		String[] splitLine = line.toLowerCase().split("[//s]+"); //Array of words in the line.
-		double firstProb = 0;
+		String[] splitLine = line.toLowerCase().split("\\s+"); //Array of words in the line.
+		double firstProb = Math.random() * 0.001;
 		double sum = 0;
 
 		Float val;
-		if ((val = firstCounts.get(splitLine[0])) != null)
+		if ((val = counts.get(splitLine[0])) != null) //If the first word is in our counts table
 			firstProb = Math.log(val); //Log of the first word probability.
-//		else
-//			firstProb = Math.log(smallest / 2);
 		
-		for (int i = 1; i < splitLine.length; ++i) //going through the array
+		for (int i = 0; i < splitLine.length - 1; ++i) //going through the array
 		{
-			if (words.get(splitLine[i]) != null && words.get(splitLine[i - 1]) != null 
-					&& mat.get(words.get(splitLine[i]), words.get(splitLine[i - 1])) != 0)
-				sum += Math.log(mat.get(words.get(splitLine[i]), words.get(splitLine[i - 1]))); //taking the log of the bigram probability
-//			else
-//				sum += Math.log(smallest / 2);
+			if (words.get(splitLine[i]) != null && words.get(splitLine[i + 1]) != null  //both words have been seen before separately
+					&& mat.get(words.get(splitLine[i]), words.get(splitLine[i + 1])) != 0) //words have been seen consecutively
+				sum += Math.log(mat.get(words.get(splitLine[i]), words.get(splitLine[i + 1]))); //taking sum of the log of the bigram probability
+			else
+				sum += Math.random() * 0.00001;
 		}
 		
 		return firstProb + sum; //returning the first word probability plus the sum of the bigram probability.
 	}
+//	
+//	public double probabilityWhole(File file)
+//	{
+//		
+//		return 0;
+//	}
 
 	public void normalize()
 	{
 		//Normalize first words hash map
-		for (String i: firstCounts.keySet()) //For each first word.
+		for (String i: counts.keySet()) //For each first word.
 		{
-			firstCounts.put(i, firstCounts.get(i) / firstCounts.keySet().size()); //replaces count by count divided by size
+			System.out.println(counts.get(i) + " normalized to " + counts.get(i) / counts.keySet().size());
+			counts.put(i, counts.get(i) / counts.keySet().size()); //replaces count by count divided by size
 		}
 		
 		//Normalize bigram matrix

@@ -11,16 +11,10 @@ public class Classifier
 	private String[] genres;
 	private MarkovModel[] mms;
 	
-	public Classifier()
-	{
-		
-	}
-	
 	public void train(File dir)
 	{
-		System.out.println(dir.exists());
 		File[] genreFolders = dir.listFiles(); //Array of genre folders.
-		System.out.println(genreFolders.toString());
+
 		genres = new String[genreFolders.length]; //Array of genres as strings.
 		mms = new MarkovModel[genreFolders.length]; //Array of Markov Models for each genre.
 		
@@ -44,13 +38,13 @@ public class Classifier
 		
 	}
 	
-//	public String classify(File file)
+//	public String classifyWhole(File file)
 //	{
 //		double[] probabilities = new double[genres.length];//array of initial probabilities.
 //		int current = 0;//array counter.
 //		for (MarkovModel mm: mms) //for every MarkovModel in the array.
 //		{
-//			probabilities[current] = mm.probability(file); //get initial probability from the Markov Model.
+//			probabilities[current] = mm.probabilityWhole(file); //get initial probability from the Markov Model.
 //			++current;
 //		}
 //		
@@ -118,16 +112,20 @@ public class Classifier
 		
 		while (s.hasNext()) //
 		{
-			line = s.nextLine(); 
-			vote = classifyLine(line); //returns the classification of line.
+			line = s.nextLine();
 			
-			if (!votes.containsKey(vote)) //if the word is not already in the HashMap.
+			if (line.trim().length() > 0)
 			{
-				votes.put(vote, 1);//add and set the vote to 1.
-			}
-			else //if the vote is already in the HashMap
-			{
-				votes.put(vote, votes.get(vote) + 1); //Increment the number of votes 
+				vote = classifyLine(line); //returns the classification of line.
+			
+				if (!votes.containsKey(vote)) //if the word is not already in the HashMap.
+				{
+					votes.put(vote, 1);//add and set the vote to 1.
+				}
+				else //if the vote is already in the HashMap
+				{
+					votes.put(vote, votes.get(vote) + 1); //Increment the number of votes 
+				}
 			}
 		}
 		
@@ -168,7 +166,7 @@ public class Classifier
 	{
 		Classifier cf = new Classifier();
 		cf.train(new File("/Users/linzy/Documents/workspace/AI Project/AISongLyrics"));
-		String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/TestSongs/s4.txt"));
+		String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/TestSongs/s1.txt"));
 		//String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/AISongLyrics/Spiritual/Agnus Dei- Richard Marlow & The Choir of Trinity College.txt"));
 		System.out.println(x);
 	}
