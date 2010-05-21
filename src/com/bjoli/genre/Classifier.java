@@ -15,20 +15,33 @@ public class Classifier
 	{
 		File[] genreFolders = dir.listFiles(); //Array of genre folders.
 
+		if (dir.exists())
+			System.out.println("The directory exists.");
+		else
+			System.out.println("The directory does not exist.");
+		
 		genres = new String[genreFolders.length]; //Array of genres as strings.
 		mms = new MarkovModel[genreFolders.length]; //Array of Markov Models for each genre.
 		
+		System.out.println("There are " + genreFolders.length + " folders.");
+		
 		for (int i = 0; i < genreFolders.length; ++i) //For each folder...
 		{
-			genres[i] = genreFolders[i].getName(); //Set the new genre name.
-			mms[i] = new MarkovModel(); //Initialize new MM.
-			for (File file: genreFolders[i].listFiles()) //For each file in the genre folder...
+			if (!genreFolders[i].isHidden())
 			{
-				mms[i].update(file); //Initial pass to update words and counts.
-				mms[i].train(file, i); //Train it.
+				genres[i] = genreFolders[i].getName(); //Set the new genre name.
+				mms[i] = new MarkovModel(); //Initialize new MM.
+				for (File file: genreFolders[i].listFiles()) //For each file in the genre folder...
+				{
+					if (!file.isHidden())
+					{
+						mms[i].update(file); //Initial pass to update words and counts.
+						mms[i].train(file); //Train it.
+					}
+				}
 			}
 		}
-		
+
 		//TEST STUFF
 //		for (MarkovModel mm: mms)
 //		{
@@ -38,34 +51,71 @@ public class Classifier
 		
 	}
 	
-//	public String classifyWhole(File file)
-//	{
-//		double[] probabilities = new double[genres.length];//array of initial probabilities.
-//		int current = 0;//array counter.
-//		for (MarkovModel mm: mms) //for every MarkovModel in the array.
-//		{
-//			probabilities[current] = mm.probabilityWhole(file); //get initial probability from the Markov Model.
-//			++current;
-//		}
-//		
-//		double[] realProbabilities = new double[genres.length];//Array of calculated probabilities.
-//		int max = 0; //Pointer to maximum probability.
-//		for (int i = 0; i < genres.length; ++i) //Calculate probability for each genre.
-//		{
-//			double sum = 0;
-//			for (int j = 0; j < genres.length; ++j)//Sum of the probabilities in different genres.
-//			{
-//				sum += Math.exp(probabilities[j]);
-//			}
-//			realProbabilities[i] = Math.exp(probabilities[i]) / sum; //Calculating final probability.
-//			if (realProbabilities[i] > realProbabilities[max]) //recalculating max probability.
-//			{
-//				max = i;
-//			}
-//		}
-//		
-//		return genres[max];//returning corresponding genre.
-//	}
+	public void trainWhole(File dir)
+	{
+		File[] genreFolders = dir.listFiles(); //Array of genre folders.
+
+		if (dir.exists())
+			System.out.println("The directory exists.");
+		else
+			System.out.println("The directory does not exist.");
+		
+		genres = new String[genreFolders.length]; //Array of genres as strings.
+		mms = new MarkovModel[genreFolders.length]; //Array of Markov Models for each genre.
+		
+		System.out.println("There are " + genreFolders.length + " folders.");
+		
+		for (int i = 0; i < genreFolders.length; ++i) //For each folder...
+		{
+			if (!genreFolders[i].isHidden())
+			{
+				genres[i] = genreFolders[i].getName(); //Set the new genre name.
+				mms[i] = new MarkovModel(); //Initialize new MM.
+				for (File file: genreFolders[i].listFiles()) //For each file in the genre folder...
+				{
+					if (!file.isHidden())
+					{
+						mms[i].updateWhole(file); //Initial pass to update words and counts.
+						mms[i].trainWhole(file); //Train it.
+					}
+				}
+			}
+		}
+	}
+	
+	public String classifyWhole(File file)
+	{
+		double[] probabilities = new double[genres.length]; //array of initial probabilities.
+		int current = 0; //array counter.
+		for (MarkovModel mm: mms) //for every MarkovModel in the array.
+		{
+			probabilities[current] = mm.probabilityWhole(file); //get initial probability from the Markov Model.
+			++current;
+		}
+		
+		double[] realProbabilities = new double[genres.length];//Array of calculated probabilities.
+		int max = 0; //Pointer to maximum probability.
+		for (int i = 0; i < genres.length; ++i) //Calculate probability for each genre.
+		{
+			double sum = 0;
+			for (int j = 0; j < genres.length; ++j)//Sum of the probabilities in different genres.
+			{
+				sum += Math.exp(probabilities[j]);
+			}
+			realProbabilities[i] = Math.exp(probabilities[i]) / sum; //Calculating final probability.
+			if (realProbabilities[i] > realProbabilities[max]) //recalculating max probability.
+			{
+				max = i;
+			}
+		}
+		
+		for (int i = 0; i < genres.length; ++i)
+		{
+			System.out.println(genres[i] + " : " + probabilities[i]);
+		}
+		
+		return genres[max]; //returning corresponding genre.
+	}
 	
 	public String classifyLine(String line)
 	{
@@ -162,11 +212,20 @@ public class Classifier
 		return s;
 	}
 	
+	public void printWordCounts(int i)
+	{
+		System.out.println(genres[i] + " : " + mms[i].getWordCounts().toString());
+	}
+	
 	public static void main(String[] args)
 	{
 		Classifier cf = new Classifier();
 		cf.train(new File("/Users/linzy/Documents/workspace/AI Project/AISongLyrics"));
-		String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/TestSongs/s1.txt"));
+		
+		System.out.println("Finished Training.");
+		
+		String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/TestSongs/s4.txt"));
+		cf.printWordCounts(0);
 		//String x = cf.classify(new File("/Users/linzy/Documents/workspace/AI Project/AISongLyrics/Spiritual/Agnus Dei- Richard Marlow & The Choir of Trinity College.txt"));
 		System.out.println(x);
 	}

@@ -47,6 +47,7 @@ public class GraphicalFrame extends JPanel
     JButton trainButton, classifyButton;
     JTextArea log;
     JFileChooser fc;
+    Classifier cf;
 
     public GraphicalFrame() {
         super(new BorderLayout());
@@ -60,6 +61,9 @@ public class GraphicalFrame extends JPanel
 
         //Create a file chooser
         fc = new JFileChooser();
+        
+        //Create a new Classifier
+        cf = new Classifier();
 
         //Uncomment one of the following lines to try a different
         //file selection mode.  The first allows just directories
@@ -105,6 +109,8 @@ public class GraphicalFrame extends JPanel
                 File file = fc.getSelectedFile();
                 //This is where a real application would train the file.
                 log.append("Training: " + file.getName() + "." + newline);
+                cf.train(file);
+                log.append("Training complete." + newline);
             } else {
                 log.append("Train command cancelled by user." + newline);
             }
@@ -118,6 +124,7 @@ public class GraphicalFrame extends JPanel
                 File file = fc.getSelectedFile();
                 //This is where a real application would classify the file.
                 log.append("Classifying: " + file.getName() + "." + newline);
+                log.append( file.getName() + " has been classified as: " + cf.classify(file) + newline);
             } else {
                 log.append("Classify command cancelled by user." + newline);
             }
